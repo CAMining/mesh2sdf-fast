@@ -42,20 +42,25 @@ pip install -e ".[all]"       # All optional dependencies
 
 ## Quick Start
 
+The easiest way to get started is to run the provided demo script, which handles mesh loading, SDF generation, and visualization:
+
+```bash
+python example/demo.py
+```
+
+### Basic Usage
+
 ```python
-from mesh2sdf_fast import mesh_to_sdf, visualize_sdf_slice
-import matplotlib.pyplot as plt
+import mesh2sdf_fast as mesh2sdf
 
 # Generate SDF from mesh file
-sdf = mesh_to_sdf("model.stl", resolution=64)
+sdf = mesh2sdf.mesh_to_sdf("model.obj", resolution=64)
 
-# View SDF information
-print(f"SDF dimensions: {sdf.size_x}x{sdf.size_y}x{sdf.size_z}")
-print(f"Cell size: {sdf.cell_size}")
+# Get SDF values
+val = sdf.at(10, 20, 30)
 
-# Visualize middle slice
-visualize_sdf_slice(sdf, axis='z')
-plt.show()
+# Convert to NumPy array
+sdf_array = sdf.to_numpy() # Shape: (res+1, res+1, res+1)
 ```
 
 ### Generate Test Data

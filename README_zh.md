@@ -15,7 +15,7 @@
 
 1. **平面切割**：用体素每一层所在平面切割网格，生成轮廓线
 2. **2D距离变换**：使用曼哈顿距离变体（两遍扫描算法）
-3. **Z方向传播**：合并各层距离场，完成3D SDF生成
+3. **方向传播**：合并各层距离场，完成3D SDF生成
 
 ## 安装
 
@@ -42,20 +42,25 @@ pip install -e ".[all]"       # 所有可选依赖
 
 ## 快速开始
 
+最简单的入门方式是运行提供的示例脚本，它包含网格加载、SDF 生成及可视化全流程：
+
+```bash
+python example/demo.py
+```
+
+### 基本用法
+
 ```python
-from mesh2sdf_fast import mesh_to_sdf, visualize_sdf_slice
-import matplotlib.pyplot as plt
+import mesh2sdf_fast as mesh2sdf
 
-# 从网格文件生成SDF
-sdf = mesh_to_sdf("model.stl", resolution=64)
+# 从网格文件生成 SDF
+sdf = mesh2sdf.mesh_to_sdf("model.obj", resolution=64)
 
-# 查看SDF信息
-print(f"SDF尺寸: {sdf.size_x}x{sdf.size_y}x{sdf.size_z}")
-print(f"单元格大小: {sdf.cell_size}")
+# 获取指定的 SDF 值
+val = sdf.at(10, 20, 30)
 
-# 可视化中间切片
-visualize_sdf_slice(sdf, axis='z')
-plt.show()
+# 转换为 NumPy 数组
+sdf_array = sdf.to_numpy() # 形状: (res+1, res+1, res+1)
 ```
 
 ### 生成测试数据
