@@ -1,0 +1,76 @@
+[build-system]
+requires = ["scikit-build-core>=0.5", "pybind11>=2.11"]
+build-backend = "scikit_build_core.build"
+
+[project]
+name = "mesh2sdf-fast"
+version = "0.1.0"
+description = "Fast Signed Distance Field generation from meshes (高性能网格到符号距离场转换)"
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.8"
+authors = [
+    {name = "Mesh2SDF-Fast Contributors"}
+]
+keywords = ["mesh", "sdf", "signed distance field", "3d", "geometry"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: C++",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Multimedia :: Graphics :: 3D Modeling",
+]
+
+dependencies = [
+    "numpy>=1.20",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "pytest-cov",
+]
+viz = [
+    "pyvista>=0.40.0",
+    "matplotlib>=3.5",
+]
+all = [
+    "mesh2sdf-fast[dev,viz]",
+]
+
+[project.urls]
+Homepage = "https://github.com/mesh2sdf/mesh2sdf-fast"
+Documentation = "https://github.com/mesh2sdf/mesh2sdf-fast#readme"
+Repository = "https://github.com/mesh2sdf/mesh2sdf-fast"
+Issues = "https://github.com/mesh2sdf/mesh2sdf-fast/issues"
+
+[tool.scikit-build]
+cmake.minimum-version = "3.15"
+wheel.packages = ["mesh2sdf_fast"]
+build-dir = "build/{wheel_tag}"
+cmake.build-type = "Debug"
+
+[tool.scikit-build.cmake.define]
+CMAKE_BUILD_TYPE = "Debug"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+addopts = "-v --tb=short"
+
+[tool.ruff]
+line-length = 88
+target-version = "py38"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "C4"]
+ignore = ["E501"]
