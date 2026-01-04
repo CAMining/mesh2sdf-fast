@@ -152,8 +152,9 @@ Mesh2SDF-Fast/
 ├── include/mesh2sdf/     # C++ header files
 ├── src/                  # C++ source files
 ├── mesh2sdf_fast/        # Python package
-├── tests/                # Test code
-├── notebooks/            # Jupyter examples
+├── example/              # Usage examples and demo
+│   └── data/             # Sample mesh data
+├── tests/                # Unit tests
 ├── CMakeLists.txt        # CMake configuration
 └── pyproject.toml        # Python project configuration
 ```

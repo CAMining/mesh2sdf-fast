@@ -152,8 +152,9 @@ Mesh2SDF-Fast/
 ├── include/mesh2sdf/     # C++ 头文件
 ├── src/                  # C++ 源文件
 ├── mesh2sdf_fast/        # Python 包
-├── tests/                # 测试代码
-├── notebooks/            # Jupyter 示例
+├── example/              # 使用示例与演示
+│   └── data/             # 示例网格数据
+├── tests/                # 单元测试
 ├── CMakeLists.txt        # CMake 配置
 └── pyproject.toml        # Python 项目配置
 ```
