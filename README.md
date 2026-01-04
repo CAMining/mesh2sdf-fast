@@ -26,9 +26,6 @@ Fast Signed Distance Field (SDF) generation from mesh models - A high-performanc
 git clone https://github.com/csubilin/mesh2sdf-fast.git
 cd mesh2sdf-fast
 
-# Install dependencies
-pip install scikit-build-core pybind11 cmake
-
 # Install (choose one)
 pip install -e .              # Core only (numpy)
 pip install -e ".[viz]"       # + Visualization (pyvista, matplotlib)
@@ -107,6 +104,35 @@ sdf = mesh_to_sdf(cube, resolution=64)
 | `cell_size` | Cell size |
 | `at(x, y, z)` | Get SDF value |
 | `to_numpy()` | Convert to NumPy array |
+
+## Development & Debugging
+
+### Switching Build Types
+
+For performance, use **Release** mode (default). For debugging C++ code (e.g., using GDB/LLDB in VS Code), use **Debug** mode.
+
+#### Option A: Temporary (Recommended)
+Reinstall with the specific build type without modifying `pyproject.toml`:
+```bash
+# For Debug
+pip install -e . --config-settings=cmake.build-type=Debug
+
+# For Release
+pip install -e . --config-settings=cmake.build-type=Release
+```
+
+#### Option B: Persistent
+Modify `pyproject.toml` directly:
+```toml
+[tool.scikit-build]
+cmake.build-type = "Debug"  # Change to "Release" for production
+
+[tool.scikit-build.cmake.define]
+CMAKE_BUILD_TYPE = "Debug"
+```
+
+### VS Code Debugging
+If you have configured `.vscode/launch.json` for C++ debugging, ensure you have reinstalled the package in **Debug** mode using one of the methods above to include debug symbols and disable optimizations.
 
 ## Directory Structure
 

@@ -26,9 +26,6 @@
 git clone https://github.com/csubilin/mesh2sdf-fast.git
 cd mesh2sdf-fast
 
-# 安装依赖
-pip install scikit-build-core pybind11 cmake
-
 # 安装（选择一种）
 pip install -e .              # 仅核心功能 (numpy)
 pip install -e ".[viz]"       # + 可视化功能 (pyvista, matplotlib)
@@ -107,6 +104,35 @@ sdf = mesh_to_sdf(cube, resolution=64)
 | `cell_size` | 单元格大小 |
 | `at(x, y, z)` | 获取SDF值 |
 | `to_numpy()` | 转换为NumPy数组 |
+
+## 开发与调试
+
+### 切换编译模式
+
+为了获得最佳性能，请使用 **Release** 模式（默认）。如果需要调试 C++ 代码（例如在 VS Code 中使用 GDB），请使用 **Debug** 模式。
+
+#### 方式 A：临时切换（推荐）
+通过命令行安装时指定模式，无需修改 `pyproject.toml`：
+```bash
+# 切换到 Debug 模式
+pip install -e . --config-settings=cmake.build-type=Debug
+
+# 切换回 Release 模式
+pip install -e . --config-settings=cmake.build-type=Release
+```
+
+#### 方式 B：持久化配置
+直接修改 `pyproject.toml` 文件中的相关字段：
+```toml
+[tool.scikit-build]
+cmake.build-type = "Debug"  # 生产环境请改为 "Release"
+
+[tool.scikit-build.cmake.define]
+CMAKE_BUILD_TYPE = "Debug"
+```
+
+### VS Code 调试
+如果您配置了 `.vscode/launch.json` 用于 C++ 调试，请务必先使用上述方法之一以 **Debug** 模式重新安装包，以确保包含调试符号并禁用编译器优化。
 
 ## 目录结构
 
