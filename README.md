@@ -17,6 +17,12 @@ Fast Signed Distance Field (SDF) generation from mesh models - A high-performanc
 2. **2D Distance Transform**: Manhattan distance variant with two-pass scanning algorithm
 3. **Multi-Axis Fusion**: Merge distance fields from X, Y, Z axes for robust 3D SDF generation
 
+## Limitations
+
+- **Mesh Quality**: The algorithm assumes the input mesh is **watertight** (closed) and has correct orientation. 
+- **Invalid Geometries**: Meshes with holes, self-intersections, or duplicate faces may result in incorrect sign (Inside/Outside) calculations.
+- **Pre-processing**: It is recommended to clean your mesh (e.g., using Blender or MeshLab) before conversion if you encounter artifacts.
+
 ## Installation
 
 ### From Source
