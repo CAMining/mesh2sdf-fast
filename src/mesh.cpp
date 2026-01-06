@@ -11,6 +11,16 @@
 
 namespace mesh2sdf {
 
+void Mesh::add_polygon(const std::vector<size_t>& indices) {
+    if (indices.size() < 3) return; // Not a face
+    
+    // Fan triangulation: Connect first vertex to all others
+    size_t v0 = indices[0];
+    for (size_t i = 1; i < indices.size() - 1; ++i) {
+        triangles.emplace_back(v0, indices[i], indices[i+1]);
+    }
+}
+
 Mesh load_stl(const std::string& filepath) {
     std::ifstream file(filepath, std::ios::binary);
     if (!file.is_open()) {
@@ -89,6 +99,13 @@ Mesh load_obj(const std::string& filepath) {
     Mesh mesh;
     std::string line;
     
+    // Lambda to parse vertex index (format: v or v/vt or v/vt/vn or v//vn)
+    auto parse_vertex = [](const std::string& s) -> size_t {
+        size_t pos = s.find('/');
+        std::string idx_str = (pos != std::string::npos) ? s.substr(0, pos) : s;
+        return std::stoul(idx_str) - 1;  // OBJ indices start from 1
+    };
+
     while (std::getline(file, line)) {
         if (line.empty() || line[0] == '#') continue;
         
@@ -102,24 +119,22 @@ Mesh load_obj(const std::string& filepath) {
             iss >> x >> y >> z;
             mesh.vertices.emplace_back(x, y, z);
         } else if (prefix == "f") {
-            // Face (only triangles supported)
-            std::string v0_str, v1_str, v2_str;
-            iss >> v0_str >> v1_str >> v2_str;
+            // faces
+            std::vector<size_t> face_indices;
+            std::string v_str;
+            while (iss >> v_str) {
+                try {
+                    face_indices.push_back(parse_vertex(v_str));
+                } catch (...) {
+                    continue;
+                }
+            }
             
-            // Parse vertex index（format: v or v/vt or v/vt/vn or v//vn）
-            auto parse_vertex = [](const std::string& s) -> size_t {
-                size_t pos = s.find('/');
-                std::string idx_str = (pos != std::string::npos) ? s.substr(0, pos) : s;
-                return std::stoul(idx_str) - 1;  // OBJ indices start from 1
-            };
-            
-            try {
-                size_t i0 = parse_vertex(v0_str);
-                size_t i1 = parse_vertex(v1_str);
-                size_t i2 = parse_vertex(v2_str);
-                mesh.triangles.emplace_back(i0, i1, i2);
-            } catch (...) {
-                // Skip unparseable face
+            // Triangulate polygons (Fan triangulation)
+            if (face_indices.size() >= 3) {
+                for (size_t i = 1; i < face_indices.size() - 1; ++i) {
+                    mesh.triangles.emplace_back(face_indices[0], face_indices[i], face_indices[i+1]);
+                }
             }
         }
     }

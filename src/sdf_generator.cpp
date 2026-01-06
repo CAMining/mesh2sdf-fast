@@ -56,8 +56,7 @@ SDFData SDFGenerator::generate(const Mesh& mesh, std::function<void(int, int)> p
     sdf.cell_size_y = cell_size_y;
     sdf.cell_size_z = cell_size_z;
 
-    const float FAR_VALUE = 9.99e10f; // Standard convention: exterior is positive infinity
-    sdf.values.resize(sdf.size_x * sdf.size_y * sdf.size_z, FAR_VALUE);
+    sdf.values.resize(sdf.size_x * sdf.size_y * sdf.size_z, INF_DIST);
     
     PlaneCutter cutter;
     cutter.set_mesh(work_mesh);
@@ -119,7 +118,7 @@ SDFData SDFGenerator::generate(const Mesh& mesh, std::function<void(int, int)> p
             // Merge Z-slice (Block memory)
             size_t offset = (size_t)z * sdf.size_x * sdf.size_y;
             for (size_t i = 0; i < slice_values.size(); ++i) {
-                merge_sdf(sdf.values[offset + i], slice_values[i], FAR_VALUE - 1.0f);
+                merge_sdf(sdf.values[offset + i], slice_values[i], INF_DIST - 1.0f);
             }
         }
     }
@@ -165,12 +164,12 @@ SDFData SDFGenerator::generate(const Mesh& mesh, std::function<void(int, int)> p
             // Merge Y-slice (Strided memory)
             // slice index k = z * size_x + x
             // grid index  = z * (sx*sy) + y * sx + x
-            for (int z = 0; z < sdf.size_z; ++z) {
-                for (int x = 0; x < sdf.size_x; ++x) {
-                    float val = slice_values[z * sdf.size_x + x];
-                    size_t grid_idx = (size_t)z * sdf.size_x * sdf.size_y + (size_t)y * sdf.size_x + x;
-                    merge_sdf(sdf.values[grid_idx], val, FAR_VALUE - 1.0f);
-                }
+            for (size_t i = 0; i < slice_values.size(); ++i) {
+                // (x, z) coordinates in slice map to (x, y, z) in global SDF
+                int x_slice = i % sdf.size_x;
+                int z_slice = i / sdf.size_x;
+                size_t global_idx = (size_t)z_slice * sdf.size_x * sdf.size_y + (size_t)y * sdf.size_x + (size_t)x_slice;
+                merge_sdf(sdf.values[global_idx], slice_values[i], INF_DIST - 1.0f);
             }
         }
     }
@@ -216,12 +215,11 @@ SDFData SDFGenerator::generate(const Mesh& mesh, std::function<void(int, int)> p
             // Merge X-slice (Strided memory)
             // slice index k = z * size_y + y
             // grid index  = z * (sx*sy) + y * sx + x
-            for (int z = 0; z < sdf.size_z; ++z) {
-                for (int y = 0; y < sdf.size_y; ++y) {
-                    float val = slice_values[z * sdf.size_y + y];
-                    size_t grid_idx = (size_t)z * sdf.size_x * sdf.size_y + (size_t)y * sdf.size_x + x;
-                    merge_sdf(sdf.values[grid_idx], val, FAR_VALUE - 1.0f);
-                }
+            for (size_t i = 0; i < slice_values.size(); ++i) {
+                int y_slice = i % sdf.size_y;
+                int z_slice = i / sdf.size_y;
+                size_t global_idx = (size_t)z_slice * sdf.size_x * sdf.size_y + (size_t)y_slice * sdf.size_x + (size_t)x;
+                merge_sdf(sdf.values[global_idx], slice_values[i], INF_DIST - 1.0f);
             }
         }
     }

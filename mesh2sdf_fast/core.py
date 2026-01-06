@@ -88,7 +88,7 @@ def mesh_to_sdf(
     
     # Check if it's a valid triangle mesh
     if mesh.triangle_count() == 0:
-        raise ValueError("Input mesh contains no triangles. Only triangle meshes are supported.")
+        raise ValueError("Input mesh contains no faces (triangles or polygons).")
     
     # Create configuration
     config = _core.SDFConfig()

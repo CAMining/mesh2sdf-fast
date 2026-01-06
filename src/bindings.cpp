@@ -75,7 +75,10 @@ PYBIND11_MODULE(_core, m) {
         .def("vertex_count", &mesh2sdf::Mesh::vertex_count,
              "Get vertex count")
         .def("triangle_count", &mesh2sdf::Mesh::triangle_count,
-             "Get triangle count");
+             "Get triangle count")
+        .def("add_polygon", &mesh2sdf::Mesh::add_polygon, 
+             py::arg("indices"), 
+             "Add a polygon (list of vertex indices). Automatically triangulates n-gons.");
     
     // Mesh loading functions
     m.def("load_stl", &mesh2sdf::load_stl, py::arg("filepath"),

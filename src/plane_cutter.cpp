@@ -110,7 +110,7 @@ void PlaneCutter::close_contours(std::vector<ContourSegment>& contours) {
     if (contours.empty()) return;
 
     // Epsilon for point matching
-    const double EPSILON = 1e-4;
+    // Using global constant EPSILON from common.hpp
     const double EPSILON_SQ = EPSILON * EPSILON;
     // Quantization scale for spatial hashing (1/E)
     // Use slightly larger cell size to ensure matches

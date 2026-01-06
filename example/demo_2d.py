@@ -19,9 +19,22 @@ def main():
 
     # 2. Generate SDF
     resolution = 128
-    print(f"Generating SDF with resolution {resolution}...")
+    sx, sy, sz = False, True, True
+    active_axes = [a for a, v in zip(['X', 'Y', 'Z'], [sx, sy, sz]) if v]
+    axes_str = f"({', '.join(active_axes)}-Axis slicing)" if active_axes else ""
+    print(f"Generating SDF with resolution {resolution} {axes_str}...")
+    
     start_time = time.time()
-    sdf_data = mesh2sdf.mesh_to_sdf(mesh, resolution=resolution)
+    sdf_data = mesh2sdf.mesh_to_sdf(
+        mesh, 
+        resolution=resolution, 
+        padding=0.0, 
+        normalize=False,
+        slice_x=sx,
+        slice_y=sy,
+        slice_z=sz,
+        export_contours=True,
+    )
     print(f"SDF generation took {time.time() - start_time:.4f} seconds")
 
     # 3. Visualize Multiple Slices

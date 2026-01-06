@@ -21,7 +21,7 @@ Fast Signed Distance Field (SDF) generation from mesh models - A high-performanc
 ## Limitations
 
 - **Mesh Quality**: The algorithm now supports **non-watertight** (open) meshes and meshes with duplicate faces, thanks to the robust auto-closure algorithm.
-- **Mesh Type**: Currently, only **triangle meshes** are supported. Quads or other polygons must be triangulated before processing.
+- **Mesh Type**: Supports arbitrary polygonal meshes (automatically triangulated during loading). For best results, ensure the mesh is manifold and closed, though the algorithm is robust to many common defects.
 - **Pre-processing**: It is recommended to clean your mesh (e.g., using Blender or MeshLab) before conversion if you encounter artifacts.
 - **Numerical Precision**: If coordinate values are extremely large (exceeding floating-point precision limits), the reconstructed model via Marching Cubes may appear unsmooth or "blocky". It is recommended to center and scale your mesh near the origin before processing.
 - **Parallel Boundaries**: Since the algorithm uses plane slicing, if a mesh boundary is perfectly parallel to the cutting plane, the contour might be missed. In such extreme cases, consider enabling slicing from multiple directions (X, Y, Z) using the `mesh_to_sdf` parameters to ensure full coverage.

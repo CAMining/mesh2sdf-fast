@@ -50,9 +50,6 @@ public:
 private:
     int width_;   ///< Grid width
     int height_;  ///< Grid height
-    
-    /// Infinity distance value
-    static constexpr float INF_DIST = 1.0e9f;
 };
 
 }  // namespace mesh2sdf

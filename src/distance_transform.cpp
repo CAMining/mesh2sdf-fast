@@ -30,8 +30,7 @@ void DistanceTransform2D::compute_signed(
     }
     
     // 1. Initialize mesh
-    const float FAR_VALUE = 9.99e10f; // Standard convention: exterior is positive infinity
-    std::fill(grid.begin(), grid.end(), FAR_VALUE);
+    std::fill(grid.begin(), grid.end(), INF_DIST);
 
     // Internal structure definition
     struct LineSegmentLocal {
@@ -87,9 +86,9 @@ void DistanceTransform2D::compute_signed(
             
             // Deduplicate intersections (Fix for coincident faces/double geometry)
             // If duplicate intersections exist (A, A, B, B), parity toggles twice resulting in no sign change.
-            // Deduplication is critical！
+            // Deduplication is critical!
             auto last = std::unique(intersections.begin(), intersections.end(), 
-                                  [](double a, double b) { return std::abs(a - b) < 1e-4; });
+                                  [](double a, double b) { return std::abs(a - b) < EPSILON; });
             intersections.erase(last, intersections.end());
 
             int currentIntersectionIdx = 0;
@@ -125,7 +124,7 @@ void DistanceTransform2D::compute_signed(
                     grid[idx] = val;
                 } else {
                     float current = grid[idx];
-                    if (current == FAR_VALUE) {
+                    if (current == INF_DIST) {
                         grid[idx] = val;
                     } else {
                         // Merging logic: Prioritize Inside (Negative) to fix thin object issues

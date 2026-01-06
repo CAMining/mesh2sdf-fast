@@ -8,6 +8,7 @@
 #ifndef MESH2SDF_MESH_HPP
 #define MESH2SDF_MESH_HPP
 
+#include "common.hpp"
 #include <vector>
 #include <array>
 #include <string>
@@ -193,6 +194,12 @@ public:
      * @brief Get triangle count
      */
     size_t triangle_count() const { return triangles.size(); }
+
+    /**
+     * @brief Add a polygon face (automatically triangulated)
+     * @param indices List of vertex indices forming the polygon
+     */
+    void add_polygon(const std::vector<size_t>& indices);
 };
 
 /**
