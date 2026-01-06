@@ -8,6 +8,9 @@
 #include "mesh2sdf/plane_cutter.hpp"
 #include <cmath>
 #include <algorithm>
+#include <unordered_map> // For spatial hash
+#include <functional>    // For std::hash
+#include <utility>       // For std::pair
 
 namespace mesh2sdf {
 
@@ -103,55 +106,166 @@ std::vector<ContourSegment3D> PlaneCutter::intersect(double iso_value) const {
     return segments;
 }
 
-std::vector<ContourSegment> PlaneCutter::cut(const Mesh& mesh, double z_level) {
-    // Compatible with old API: set state first, then cut
-    // Note: for multiple calls, recommend external manual management of set_mesh and compute_scalars
-    if (mesh_ != &mesh) {
-        set_mesh(mesh);
-        compute_scalars(Vec3(0,0,0), Vec3(0,0,1)); // Default to Z-slicing
-    } else {
-        // If mesh unchanged, assume scalars (Z values) already computed（or need recomputation？）
-        // For safety, recompute by default, or assume cut always for Z-axis
-        // Actually old cut interface always Z_LEVEL cutting, so normal is always (0,0,1)
-        // As long as scalars contain Z coordinates。
-        // But for safety（because p0 may change），recomputing scalars is safer unless optimizing
-        // Here, z_level in cut(mesh, z_level) is iso_value，
-        // compute_scalars needs p0.z=0 to make scalar = z
-        // So: scalar = (v - (0,0,0)) . (0,0,1) = v.z
-        // This is universal for all z_levels！
-        // As long as mesh unchanged, scalars do not need recomputation。
-        if (scalars_.empty()) {
-             compute_scalars(Vec3(0,0,0), Vec3(0,0,1));
+void PlaneCutter::close_contours(std::vector<ContourSegment>& contours) {
+    if (contours.empty()) return;
+
+    // Epsilon for point matching
+    const double EPSILON = 1e-4;
+    const double EPSILON_SQ = EPSILON * EPSILON;
+    // Quantization scale for spatial hashing (1/E)
+    // Use slightly larger cell size to ensure matches
+    const double SCALE = 1.0 / (EPSILON * 2.0);
+
+    // 1. Build Spatial Index & Graph
+    struct PointHash {
+        std::size_t operator()(const std::pair<long, long>& k) const {
+            return std::hash<long>()(k.first) ^ (std::hash<long>()(k.second) << 1);
+        }
+    };
+    
+    // Map grid key -> list of segment indices that have an endpoint in this cell
+    // We store segment index + which end (0 or 1)
+    struct EndpointRef {
+        size_t seg_idx;
+        int end_idx; // 0 for p0, 1 for p1
+    };
+
+    std::unordered_map<std::pair<long, long>, std::vector<EndpointRef>, PointHash> grid;
+    
+    auto get_key = [&](const Vec2& p) {
+        return std::make_pair(
+            static_cast<long>(std::floor(p.x * SCALE)),
+            static_cast<long>(std::floor(p.y * SCALE))
+        );
+    };
+
+    // Populate grid
+    for (size_t i = 0; i < contours.size(); ++i) {
+        Vec2 p[2] = {contours[i].p0, contours[i].p1};
+        for (int j = 0; j < 2; ++j) {
+            auto key = get_key(p[j]);
+            // Insert into 3x3 neighborhood to handle boundary cases?
+            // Simple grid usually sufficient if points are EXACTLY coincident.
+            // For "close enough", checking 9 cells is safer but slower.
+            // Given marching cubes/plane cut produces exact shared vertices usually:
+            grid[key].push_back({i, j});
+            
+            // To be robust against float errors putting neighbors in adjacent cells,
+            // we search neighbors during lookup, but here we just insert to primary cell.
+        }
+    }
+
+    std::vector<bool> visited(contours.size(), false);
+    std::vector<ContourSegment> closed_contours;
+    closed_contours.reserve(contours.size() * 1.1); // Expect slight growth
+
+    // 2. Assemble Polylines
+    for (size_t i = 0; i < contours.size(); ++i) {
+        if (visited[i]) continue;
+        
+        // Start a new polyline chain
+        // We treat segments as edges. We grow from both ends of segment i.
+        std::vector<size_t> chain; 
+        chain.push_back(i);
+        visited[i] = true;
+
+        // Current open ends of the chain
+        Vec2 chain_head = contours[i].p0;
+        Vec2 chain_tail = contours[i].p1;
+        
+        // Helper to find neighbor
+        auto find_neighbor = [&](Vec2 p, size_t exclude_seg_idx) -> std::pair<size_t, int> {
+             long cx = static_cast<long>(std::floor(p.x * SCALE));
+             long cy = static_cast<long>(std::floor(p.y * SCALE));
+             
+             // Search 3x3 neighborhood
+             for (long dx = -1; dx <= 1; ++dx) {
+                 for (long dy = -1; dy <= 1; ++dy) {
+                     auto key = std::make_pair(cx + dx, cy + dy);
+                     auto it = grid.find(key);
+                     if (it != grid.end()) {
+                         for (const auto& ref : it->second) {
+                             if (ref.seg_idx == exclude_seg_idx) continue;
+                             if (visited[ref.seg_idx]) continue;
+                             
+                             // Exact distance check
+                             Vec2 target = (ref.end_idx == 0) ? contours[ref.seg_idx].p0 : contours[ref.seg_idx].p1;
+                             double d2 = (p.x - target.x)*(p.x - target.x) + (p.y - target.y)*(p.y - target.y);
+                             if (d2 < EPSILON_SQ) {
+                                 return {ref.seg_idx, ref.end_idx};
+                             }
+                         }
+                     }
+                 }
+             }
+             return {static_cast<size_t>(-1), -1}; // Not found
+        };
+
+        // Grow Tail (forward from p1)
+        while (true) {
+            auto next = find_neighbor(chain_tail, chain.back());
+            if (next.first != static_cast<size_t>(-1)) {
+                size_t idx = next.first;
+                int connect_at = next.second; // 0 or 1
+                visited[idx] = true;
+                
+                // If we connected at p0, the new tail is p1. If connected at p1, new tail is p0.
+                if (connect_at == 0) {
+                    chain_tail = contours[idx].p1;
+                } else {
+                    chain_tail = contours[idx].p0;
+                    // Properly orienting segment isn't strictly necessary for just creating a closed LOOP of segments,
+                    // but for "polyline" ordered points it is. 
+                    // To keep implementation simple and since we just output separate segments anyway,
+                    // we just track the current exposed world coordinate.
+                }
+                chain.push_back(idx);
+            } else {
+                break;
+            }
+        }
+
+        // Grow Head (backward from p0)
+        // Note: chain[0] is the starting segment. original head was contours[i].p0
+        // We need to find something that connects to `chain_head`.
+        while (true) {
+            auto prev = find_neighbor(chain_head, chain.front()); // Actually exclude "current" which is chain.front()
+             if (prev.first != static_cast<size_t>(-1)) {
+                 size_t idx = prev.first;
+                 int connect_at = prev.second;
+                 visited[idx] = true;
+                 
+                 // Update head
+                 if (connect_at == 0) {
+                     chain_head = contours[idx].p1;
+                 } else {
+                     chain_head = contours[idx].p0;
+                 }
+                 // Prepend (expensive for vector, but chains are short)
+                 chain.insert(chain.begin(), idx);
+             } else {
+                 break;
+             }
+        }
+        
+        // 3. Process the assembled polyline
+        // Add original segments
+        for (size_t seg_idx : chain) {
+            closed_contours.push_back(contours[seg_idx]);
+        }
+        
+        // Check closure
+        double d2 = (chain_head.x - chain_tail.x)*(chain_head.x - chain_tail.x) + 
+                    (chain_head.y - chain_tail.y)*(chain_head.y - chain_tail.y);
+                    
+        if (d2 > EPSILON_SQ) {
+            // It is open, close it!
+            closed_contours.emplace_back(chain_tail, chain_head);
         }
     }
     
-    // Get 3D result
-    auto segments_3d = intersect(z_level);
-    
-    // Project to 2D (take XY plane)
-    std::vector<ContourSegment> result;
-    result.reserve(segments_3d.size());
-    
-    for (const auto& seg : segments_3d) {
-        result.emplace_back(
-            Vec2(seg.p0.x, seg.p0.y),
-            Vec2(seg.p1.x, seg.p1.y)
-        );
-    }
-    
-    return result;
+    // Replace original
+    contours = std::move(closed_contours);
 }
-
-std::vector<ContourSegment3D> PlaneCutter::cut_3d(const Mesh& mesh, double z_level) {
-    if (mesh_ != &mesh) {
-        set_mesh(mesh);
-        compute_scalars(Vec3(0,0,0), Vec3(0,0,1));
-    } else if (scalars_.empty()) {
-        compute_scalars(Vec3(0,0,0), Vec3(0,0,1));
-    }
-    return intersect(z_level);
-}
-
-
 
 }  // namespace mesh2sdf

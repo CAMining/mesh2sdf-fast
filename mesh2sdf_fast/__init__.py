@@ -9,10 +9,10 @@ This library implements an efficient mesh-to-SDF conversion algorithm:
 
 __version__ = "0.1.0"
 
-# importC++核心模块
+# Import C++ core module
 from . import _core
 
-# export核心类
+# Export core classes
 from ._core import (
     Vec3,
     Vec2,
@@ -25,7 +25,7 @@ from ._core import (
     MeshLoadError,
 )
 
-# export函数
+# Export functions
 from ._core import (
     load_stl,
     load_obj,
@@ -35,15 +35,15 @@ from ._core import (
     load_sdf_csv,
 )
 
-# export高层API
+# Export high-level APIs
 from .core import mesh_to_sdf, generate_sample_data
 from .mesh_loader import load_mesh, get_mesh_info
 from .utils import sdf_to_numpy, numpy_to_sdf, visualize_sdf_slice
 
 __all__ = [
-    # 版本
+    # Version
     "__version__",
-    # 类
+    # Classes
     "Vec3",
     "Vec2", 
     "Triangle",
@@ -53,14 +53,14 @@ __all__ = [
     "SDFData",
     "SDFGenerator",
     "MeshLoadError",
-    # 核心函数
+    # Core functions
     "load_stl",
     "load_obj",
     "create_sphere",
     "create_cube",
     "save_sdf_csv",
     "load_sdf_csv",
-    # 高层API
+    # High-level APIs
     "mesh_to_sdf",
     "generate_sample_data",
     "load_mesh",

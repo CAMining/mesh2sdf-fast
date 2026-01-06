@@ -1,7 +1,7 @@
 """
 core.py - High-level API wrapper
 
-Provides simplifiedmeshto SDF conversion interface。
+Provides simplified mesh-to-SDF conversion interface.
 """
 
 import os
@@ -24,35 +24,35 @@ def mesh_to_sdf(
     progress_callback: Optional[Callable[[int, int], None]] = None
 ) -> _core.SDFData:
     """
-    Generate from meshsigned distance field（SDF）
+    Generate Signed Distance Field (SDF) from mesh
     
-    This is the main high-level API，将mesh文件或Mesh对象转换为SDF体素数据。
+    This is the main high-level API, which converts a mesh file or Mesh object to SDF voxel data.
     
     Parameters
     ----------
     mesh_or_path : str, Path, or Mesh
-        Mesh file path（STL/OBJ）or loaded Mesh object
+        Mesh file path (STL/OBJ) or loaded Mesh object
     resolution : int, optional
-        Voxel resolution（默认64，即64x64x64）
+        Voxel resolution (default 64, i.e., 64x64x64)
     padding : float, optional
-        Boundary padding ratio（默认0.1，即10%）
+        Boundary padding ratio (default 0.1, i.e., 10%)
     normalize : bool, optional
-        Whether to normalize mesh to[-1,1]range（默认True）
+        Whether to normalize mesh to [-1, 1] range (default True)
     export_contours : bool, optional
-        Whether to export contour lines for debugging (默认False)
+        Whether to export contour lines for debugging (default False)
     slice_x : bool, optional
-        Whether to slice alongXaxis and merge distance fields (默认False)
+        Whether to slice along X-axis and merge distance fields (default False)
     slice_y : bool, optional
-        Whether to slice alongYaxis and merge distance fields (默认False)
+        Whether to slice along Y-axis and merge distance fields (default False)
     slice_z : bool, optional
-        Whether to slice alongZaxis and merge distance fields (默认True)
+        Whether to slice along Z-axis and merge distance fields (default True)
     progress_callback : callable, optional
-        Progress callback function，Signature: callback(current, total)
+        Progress callback function, Signature: callback(current, total)
     
     Returns
     -------
     SDFData
-        Signed distance field data，Contains voxel values and metadata
+        Signed distance field data, contains voxel values and metadata
     
     Raises
     ------
@@ -69,22 +69,26 @@ def mesh_to_sdf(
     >>> sdf = mesh_to_sdf("model.stl", resolution=32)
     >>> print(f"SDF shape: {sdf.size_x}x{sdf.size_y}x{sdf.size_z}")
     
-    >>> # 使用进度回调
+    >>> # Use progress callback
     >>> def on_progress(cur, total):
     ...     print(f"Processing: {cur}/{total}")
     >>> sdf = mesh_to_sdf("model.obj", progress_callback=on_progress)
     """
     # Parameter validation
     if resolution <= 0:
-        raise ValueError(f"Resolution must be a positive integer，got: {resolution}")
+        raise ValueError(f"Resolution must be a positive integer, got: {resolution}")
     if padding < 0:
-        raise ValueError(f"Padding ratio cannot be negative，got: {padding}")
+        raise ValueError(f"Padding ratio cannot be negative, got: {padding}")
     
-    # Load mesh（if it's a path）
+    # Load mesh (if it's a path)
     if isinstance(mesh_or_path, (str, Path)):
         mesh = load_mesh(mesh_or_path)
     else:
         mesh = mesh_or_path
+    
+    # Check if it's a valid triangle mesh
+    if mesh.triangle_count() == 0:
+        raise ValueError("Input mesh contains no triangles. Only triangle meshes are supported.")
     
     # Create configuration
     config = _core.SDFConfig()
@@ -114,11 +118,11 @@ def generate_sample_data(
     Parameters
     ----------
     output_path : str or Path, optional
-        Output CSV file path（默认"sample_data.csv"）
+        Output CSV file path (default "sample_data.csv")
     shape : str, optional
-        Shape type，Options: "sphere" 或 "cube"（默认"sphere"）
+        Shape type, options: "sphere" or "cube" (default "sphere")
     resolution : int, optional
-        Voxel resolution（默认32）
+        Voxel resolution (default 32)
     
     Returns
     -------
@@ -136,9 +140,9 @@ def generate_sample_data(
     elif shape.lower() == "cube":
         mesh = _core.create_cube()
     else:
-        raise ValueError(f"Unsupported shape: {shape}，Options:: sphere, cube")
+        raise ValueError(f"Unsupported shape: {shape}, Options: sphere, cube")
     
-    # 生成SDF
+    # Generate SDF
     sdf = mesh_to_sdf(mesh, resolution=resolution)
     
     # Save to CSV
@@ -148,7 +152,7 @@ def generate_sample_data(
     
     print(f"Sample data saved to: {output_path}")
     print(f"  Shape: {shape}")
-    print(f"  resolution: {sdf.size_x}x{sdf.size_y}x{sdf.size_z}")
+    print(f"  Resolution: {sdf.size_x}x{sdf.size_y}x{sdf.size_z}")
     print(f"  Cell size: {sdf.cell_size:.6f}")
     
     return sdf

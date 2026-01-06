@@ -108,6 +108,9 @@ SDFData SDFGenerator::generate(const Mesh& mesh, std::function<void(int, int)> p
                 contours[i] = ContourSegment(Vec2(segments_3d[i].p0.x, segments_3d[i].p0.y),
                                              Vec2(segments_3d[i].p1.x, segments_3d[i].p1.y));
             }
+            
+            // Auto-close open contours
+            PlaneCutter::close_contours(contours);
 
             DistanceTransform2D dt(sdf.size_x, sdf.size_y);
             std::vector<float> slice_values(sdf.size_x * sdf.size_y);
@@ -150,6 +153,9 @@ SDFData SDFGenerator::generate(const Mesh& mesh, std::function<void(int, int)> p
                 contours[i] = ContourSegment(Vec2(segments_3d[i].p0.x, segments_3d[i].p0.z),
                                              Vec2(segments_3d[i].p1.x, segments_3d[i].p1.z));
             }
+            
+            // Auto-close open contours
+            PlaneCutter::close_contours(contours);
 
             // DT dimensions: X * Z
             DistanceTransform2D dt(sdf.size_x, sdf.size_z);
@@ -198,6 +204,9 @@ SDFData SDFGenerator::generate(const Mesh& mesh, std::function<void(int, int)> p
                 contours[i] = ContourSegment(Vec2(segments_3d[i].p0.y, segments_3d[i].p0.z),
                                              Vec2(segments_3d[i].p1.y, segments_3d[i].p1.z));
             }
+            
+            // Auto-close open contours
+            PlaneCutter::close_contours(contours);
 
             // DT dimensions: Y * Z
             DistanceTransform2D dt(sdf.size_y, sdf.size_z);

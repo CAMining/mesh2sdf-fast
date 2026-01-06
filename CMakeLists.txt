@@ -5,8 +5,23 @@ project(mesh2sdf VERSION 0.1.0 LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+# Find Python 3
+find_package(Python3 COMPONENTS Interpreter Development REQUIRED)
+
 # Find pybind11
-find_package(pybind11 CONFIG REQUIRED)
+# First try to find it in the current Python environment
+execute_process(
+    COMMAND "${Python3_EXECUTABLE}" -m pybind11 --cmakedir
+    OUTPUT_VARIABLE pybind11_DIR
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+    ERROR_QUIET
+)
+
+if(pybind11_DIR)
+    find_package(pybind11 CONFIG REQUIRED PATHS ${pybind11_DIR} NO_DEFAULT_PATH)
+else()
+    find_package(pybind11 CONFIG REQUIRED)
+endif()
 
 # Find OpenMP（可选，用于多线程加速）
 find_package(OpenMP)

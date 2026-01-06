@@ -16,12 +16,15 @@ Fast Signed Distance Field (SDF) generation from mesh models - A high-performanc
 1. **Plane Slicing**: Slice mesh with planes at each voxel layer to generate contour lines
 2. **2D Distance Transform**: Manhattan distance variant with two-pass scanning algorithm
 3. **Multi-Axis Fusion**: Merge distance fields from X, Y, Z axes for robust 3D SDF generation
+4. **Auto-Closure**: Automatically detects and closes open contours from non-watertight meshes to ensure valid parity checks (Jordan Curve Theorem).
 
 ## Limitations
 
-- **Mesh Quality**: The algorithm assumes the input mesh is **watertight** (closed) and has correct orientation. 
-- **Invalid Geometries**: Meshes with holes, self-intersections, or duplicate faces may result in incorrect sign (Inside/Outside) calculations.
+- **Mesh Quality**: The algorithm now supports **non-watertight** (open) meshes and meshes with duplicate faces, thanks to the robust auto-closure algorithm.
+- **Mesh Type**: Currently, only **triangle meshes** are supported. Quads or other polygons must be triangulated before processing.
 - **Pre-processing**: It is recommended to clean your mesh (e.g., using Blender or MeshLab) before conversion if you encounter artifacts.
+- **Numerical Precision**: If coordinate values are extremely large (exceeding floating-point precision limits), the reconstructed model via Marching Cubes may appear unsmooth or "blocky". It is recommended to center and scale your mesh near the origin before processing.
+- **Parallel Boundaries**: Since the algorithm uses plane slicing, if a mesh boundary is perfectly parallel to the cutting plane, the contour might be missed. In such extreme cases, consider enabling slicing from multiple directions (X, Y, Z) using the `mesh_to_sdf` parameters to ensure full coverage.
 
 ## Installation
 
@@ -48,10 +51,14 @@ pip install -e ".[all]"       # All optional dependencies
 
 ## Quick Start
 
-The easiest way to get started is to run the provided demo script, which handles mesh loading, SDF generation, and visualization:
+The easiest way to get started is to run the provided demo scripts:
 
 ```bash
-python example/demo.py
+# 3. 3D Reconstruction Demo (PyVista)
+python example/demo_3d.py
+
+# 2. 2D Slice Visualization Demo (Matplotlib)
+python example/demo_2d.py
 ```
 
 ### Basic Usage

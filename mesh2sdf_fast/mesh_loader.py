@@ -1,7 +1,7 @@
 """
-mesh_loader.py - mesh文件load器
+mesh_loader.py - Mesh file loader
 
-支持多种mesh文件格式的load。
+Supports loading multiple mesh file formats.
 """
 
 import os
@@ -12,21 +12,21 @@ from . import _core
 
 
 class MeshFileNotFoundError(FileNotFoundError):
-    """Mesh file not found异常"""
+    """Mesh file not found exception"""
     pass
 
 
 class MeshFormatError(ValueError):
-    """mesh文件格式错误异常"""
+    """Mesh file format error exception"""
     pass
 
 
 def load_mesh(filepath: Union[str, Path]) -> _core.Mesh:
     """
-    根据文件扩展名自动Load mesh文件
+    Automatically load mesh file based on file extension
     
-    支持的格式：
-    - STL (二进制和ASCII)
+    Supported formats:
+    - STL (Binary and ASCII)
     - OBJ (Wavefront)
     
     Parameters
@@ -37,31 +37,31 @@ def load_mesh(filepath: Union[str, Path]) -> _core.Mesh:
     Returns
     -------
     Mesh
-        load的mesh对象
+        Loaded mesh object
     
     Raises
     ------
     MeshFileNotFoundError
-        文件不存在
+        File does not exist
     MeshFormatError
-        不支持的文件格式
+        Unsupported file format
     MeshLoadError
-        文件内容解析失败
+        Failed to parse file content
     
     Examples
     --------
     >>> from mesh2sdf import load_mesh
     >>> mesh = load_mesh("model.stl")
-    >>> print(f"vertex数: {mesh.vertex_count()}")
-    >>> print(f"triangle数: {mesh.triangle_count()}")
+    >>> print(f"Vertex count: {mesh.vertex_count()}")
+    >>> print(f"Triangle count: {mesh.triangle_count()}")
     """
     filepath = Path(filepath)
     
-    # 检查文件是否存在
+    # Check if file exists
     if not filepath.exists():
         raise MeshFileNotFoundError(f"Mesh file not found: {filepath}")
     
-    # 获取文件扩展名
+    # Get file extension
     ext = filepath.suffix.lower()
     
     try:
@@ -71,33 +71,33 @@ def load_mesh(filepath: Union[str, Path]) -> _core.Mesh:
             mesh = _core.load_obj(str(filepath))
         else:
             raise MeshFormatError(
-                f"不支持的mesh格式: {ext}\n"
-                f"支持的格式: .stl, .obj"
+                f"Unsupported mesh format: {ext}\n"
+                f"Supported formats: .stl, .obj"
             )
     except _core.MeshLoadError as e:
-        # 重新抛出更友好的错误信息
-        raise _core.MeshLoadError(f"Load mesh文件失败: {filepath}\n原因: {str(e)}")
+        # Re-throw with more user-friendly error message
+        raise _core.MeshLoadError(f"Failed to load mesh file: {filepath}\nReason: {str(e)}")
     
-    # 验证mesh
+    # Validate mesh
     if not mesh.is_valid():
-        raise MeshFormatError(f"mesh文件内容无效或为空: {filepath}")
+        raise MeshFormatError(f"Mesh file content is invalid or empty: {filepath}")
     
     return mesh
 
 
 def get_mesh_info(mesh: _core.Mesh) -> dict:
     """
-    获取mesh的详细信息
+    Get detailed information about the mesh
     
     Parameters
     ----------
     mesh : Mesh
-        mesh对象
+        Mesh object
     
     Returns
     -------
     dict
-        包含vertex数、triangle数、包围盒等信息的字典
+        Dictionary containing vertex count, triangle count, bounding box, etc.
     """
     bbox = mesh.compute_bounding_box()
     

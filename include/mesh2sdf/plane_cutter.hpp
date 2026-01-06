@@ -64,20 +64,10 @@ public:
     std::vector<ContourSegment3D> intersect(double iso_value) const;
 
     /**
-     * @brief Cut mesh with horizontal plane (legacy API)
-     * @param mesh Input mesh
-     * @param z_level Z-coordinate of cutting plane
-     * @return List of 2D contour line segments
+     * @brief Force close open contour paths
+     * @param contours Contour segments to process
      */
-    std::vector<ContourSegment> cut(const Mesh& mesh, double z_level);
-    
-    /**
-     * @brief Cut mesh with horizontal plane, return 3D results
-     * @param mesh Input mesh
-     * @param z_level Z-coordinate of cutting plane
-     * @return List of 3D contour line segments
-     */
-    std::vector<ContourSegment3D> cut_3d(const Mesh& mesh, double z_level);
+    static void close_contours(std::vector<ContourSegment>& contours);
     
 private:
     const Mesh* mesh_ = nullptr;     ///< Current mesh being processed
