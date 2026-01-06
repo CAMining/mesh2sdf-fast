@@ -21,8 +21,8 @@ def main():
         return
 
     # 2. Generate SDF
-    resolution = 16
-    sx, sy, sz = False, False, True
+    resolution = 512
+    sx, sy, sz = True, True, False
     active_axes = [a for a, v in zip(['X', 'Y', 'Z'], [sx, sy, sz]) if v]
     axes_str = f"({', '.join(active_axes)}-Axis slicing)" if active_axes else ""
     print(f"Generating SDF with resolution {resolution} {axes_str}...")
@@ -31,12 +31,12 @@ def main():
     sdf_data = mesh2sdf.mesh_to_sdf(
         mesh, 
         resolution=resolution, 
-        padding=0.0, 
-        normalize=False,
+        padding=0.2, 
+        normalize=True,
         slice_x=sx,
         slice_y=sy,
         slice_z=sz,
-        export_contours=True,
+        export_contours=False,
     )
     print(f"SDF generation took {time.time() - start_time:.4f} seconds")
 

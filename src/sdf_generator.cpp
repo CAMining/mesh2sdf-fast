@@ -25,11 +25,18 @@ SDFData SDFGenerator::generate(const Mesh& mesh, std::function<void(int, int)> p
     Mesh work_mesh = mesh;
     
     // Normalize mesh (if configuration requires)
+    Vec3 norm_center(0, 0, 0);
+    double norm_scale = 1.0;
     if (config_.normalize_mesh) {
-        work_mesh.normalize();
+        BoundingBox original_bbox = work_mesh.compute_bounding_box();
+        norm_center = original_bbox.center();
+        norm_scale = 2.0 / original_bbox.max_extent();
+        for (auto& v : work_mesh.vertices) {
+            v = (v - norm_center) * norm_scale;
+        }
     }
     
-    // Compute bounding box
+    // Compute bounding box of (possibly normalized) mesh
     BoundingBox bbox = work_mesh.compute_bounding_box();
     
     // Add padding
@@ -227,6 +234,35 @@ SDFData SDFGenerator::generate(const Mesh& mesh, std::function<void(int, int)> p
     // Final progress
     if (progress) {
         progress(sdf.size_z, sdf.size_z);
+    }
+
+    // Apply inverse normalization if it was applied
+    if (config_.normalize_mesh) {
+        double inv_scale = 1.0 / norm_scale;
+        
+        // Restore metadata
+        sdf.origin_x = sdf.origin_x * inv_scale + norm_center.x;
+        sdf.origin_y = sdf.origin_y * inv_scale + norm_center.y;
+        sdf.origin_z = sdf.origin_z * inv_scale + norm_center.z;
+        
+        sdf.cell_size_x *= inv_scale;
+        sdf.cell_size_y *= inv_scale;
+        sdf.cell_size_z *= inv_scale;
+        
+        // Restore SDF values
+        float f_inv_scale = static_cast<float>(inv_scale);
+        for (float& v : sdf.values) {
+            if (std::abs(v) < INF_DIST - 1.0f) {
+                v *= f_inv_scale;
+            }
+        }
+        
+        // Restore debug contours
+        for (size_t i = 0; i + 2 < sdf.debug_contours.size(); i += 3) {
+            sdf.debug_contours[i] = static_cast<float>(sdf.debug_contours[i] * inv_scale + norm_center.x);
+            sdf.debug_contours[i+1] = static_cast<float>(sdf.debug_contours[i+1] * inv_scale + norm_center.y);
+            sdf.debug_contours[i+2] = static_cast<float>(sdf.debug_contours[i+2] * inv_scale + norm_center.z);
+        }
     }
     
     return sdf;
