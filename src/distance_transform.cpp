@@ -124,27 +124,8 @@ void DistanceTransform2D::compute_signed(
                     grid[idx] = val;
                 } else {
                     float current = grid[idx];
-                    if (current == INF_DIST) {
+                    if (current == INF_DIST || std::abs(val) < std::abs(current)) {
                         grid[idx] = val;
-                    } else {
-                        // Merging logic: Prioritize Inside (Negative) to fix thin object issues
-                        // If one scan direction misses the geometry (returns positive), 
-                        // we shouldn't overwrite the valid intersection (negative) from the other direction.
-                        bool cur_in = current < 0;
-                        bool val_in = val < 0;
-                        
-                        if (val_in && !cur_in) {
-                            grid[idx] = val; // Overwrite Outside with Inside
-                        }
-                        else if (!val_in && cur_in) {
-                            // Keep current Inside, ignore new Outside
-                        }
-                        else {
-                            // Both same sign: take closer surface
-                            if (std::abs(val) < std::abs(current)) {
-                                grid[idx] = val;
-                            }
-                        }
                     }
                 }
             }

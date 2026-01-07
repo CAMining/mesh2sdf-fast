@@ -21,8 +21,8 @@ def main():
         return
 
     # 2. Generate SDF
-    resolution = 512
-    sx, sy, sz = True, True, False
+    resolution = 256
+    sx, sy, sz = True, False, False
     active_axes = [a for a, v in zip(['X', 'Y', 'Z'], [sx, sy, sz]) if v]
     axes_str = f"({', '.join(active_axes)}-Axis slicing)" if active_axes else ""
     print(f"Generating SDF with resolution {resolution} {axes_str}...")
