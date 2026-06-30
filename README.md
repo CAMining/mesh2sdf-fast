@@ -32,7 +32,7 @@ Fast Signed Distance Field (SDF) generation from mesh models - A high-performanc
 
 ```bash
 # Clone repository
-git clone https://github.com/csubilin/mesh2sdf-fast.git
+git clone https://github.com/CAMining/mesh2sdf-fast.git
 cd mesh2sdf-fast
 
 # Install (choose one)
